@@ -23,7 +23,7 @@ export function LoginForm() {
 
   useEffect(() => {
     if (token) {
-      navigate("/dashboard");
+      // navigate("/dashboard");
     }
   }, [token, navigate]);
 
@@ -59,6 +59,7 @@ export function LoginForm() {
           </Alert>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
+          
           <div>
             <label className="block font-medium">Email</label>
             <Input name="email" value={formData.email} onChange={handleChange} placeholder="name@example.com" />
