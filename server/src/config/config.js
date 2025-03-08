@@ -7,7 +7,7 @@ class Config {
   constructor() {
     // Application Config
     this.NODE_ENV = process.env.NODE_ENV || "development";
-    this.PORT = process.env.PORT || 3000;
+    this.PORT = process.env.PORT || 5000;
 
     // Security Config
     this.JWT_SECRET = process.env.JWT_SECRET || "default_secret";

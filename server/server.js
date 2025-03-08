@@ -1,8 +1,9 @@
 import app from "./src/app.js";
 import { logger } from "./src/utils/logger.js";
-import config from "./src/config/config.js";
+// import config from "./src/config/db.js";
+import config from "./src/config/db.js";
 
-const PORT = config.PORT;
+const PORT = 5000;
 
 import process from "process"; // Explicitly import process for ESM
 
