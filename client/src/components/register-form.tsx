@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export function RegisterForm() {
   const [formData, setFormData] = useState({
@@ -20,6 +22,7 @@ export function RegisterForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();  
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -47,25 +50,25 @@ export function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
     if (!validateForm()) return;
-
     setIsLoading(true);
+
     try {
-      console.log("Register data:", formData);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      alert("Registration successful!");
-    } catch (err) {
-      setError("Registration failed. Email might already be in use.");
-      console.error("Registration error:", err);
-    } finally {
+      const response = await axios.post("http://localhost:5000/api/auth/register", formData);
       setIsLoading(false);
+      setError(null);
+      // Redirect to login page after successful registration
+      if (response.status === 201) {
+        alert("Registration successful! You can now log in.");
+        navigate("/login");
+      }
+
+    } catch (error) {
+      setIsLoading(false);
+      setError("An error occurred while registering. Please try again.");
     }
-  };
+
+  }
 
   return (
     <Tabs defaultValue="student" className="w-full">

@@ -1,7 +1,7 @@
 import React from "react";
 import { RegisterForm } from "@/components/register-form";
 import { Link   } from "react-router-dom";
-
+import axios from "axios";
 const RegisterPage: React.FC = () => {
   return (
     <div className="container relative flex min-h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
