@@ -166,4 +166,28 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     }
 });
 
+//filtering 
+router.get("/filter", async (req, res) => {
+    try {
+        const { category, minPrice, maxPrice, rating, teacher } = req.query;
+
+        let filter = {};
+
+        if (category) filter.category = category;
+        if (minPrice || maxPrice) {
+            filter.price = {};
+            if (minPrice) filter.price.$gte = Number(minPrice);
+            if (maxPrice) filter.price.$lte = Number(maxPrice);
+        }
+        if (rating) filter.rating = { $gte: Number(rating) }; // Get courses with rating >= given rating
+        if (teacher) filter.teacher = teacher; // Filter by teacher ID
+
+        const courses = await Course.find(filter).populate("teacher", "username email");
+        
+        res.status(200).json(courses);
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
 export default router;
