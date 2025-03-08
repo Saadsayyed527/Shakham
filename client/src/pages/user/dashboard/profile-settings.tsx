@@ -30,10 +30,8 @@ export function ProfileSettings({ instructorData, setInstructorData }: ProfileSe
       const formData = new FormData()
       formData.append("name", instructorData.name)
       formData.append("email", instructorData.email)
-      formData.append("bio", instructorData.bio || "")
-      if (profileImage) formData.append("profileImage", profileImage)
 
-      const response = await fetch("/api/instructor/profile", {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
