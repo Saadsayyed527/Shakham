@@ -15,7 +15,8 @@ import ProfileCourses from './pages/course/ProfileCourses';
 import VideoPlayer from './pages/course/videoPlayer';
 import Cart from './pages/cart/Cart';
 import Checkout from './pages/cart/Checkout';
-import { TeacherRegisterForm } from './components/teacherForm';
+import RoomPage from './pages/chat/RoomPage';
+import ChatPage from './pages/chat/ChatPage';
 
 
 
@@ -26,7 +27,6 @@ const App = () => {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/register/teacher" element={<TeacherRegisterForm />} />
         <Route path="/profile" element={<InstructorDashboard/>} />
         <Route path="/landing" element={<StudentLandingPage/>} />
         <Route path="/course/:courseId" element={<CourseContent/>} />
@@ -35,7 +35,8 @@ const App = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         
-
+        <Route path="/rooms" element={<RoomPage />} />
+        <Route path="/chat/:room" element={<ChatPage />} />
 
         <Route path="/" element={<Home />} />
       </Routes>
