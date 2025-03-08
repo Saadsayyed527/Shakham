@@ -10,6 +10,13 @@ import { Toaster } from 'react-hot-toast';
 // import { ProfileSettings } from './pages/user/dashboard/profile-settings';
 import InstructorDashboard from './pages/user/dashboard/instructor-dashboard';
 import StudentLandingPage from './pages/default/landingPage';
+import CourseContent from './pages/course/course-content';
+import ProfileCourses from './pages/course/ProfileCourses';
+import VideoPlayer from './pages/course/videoPlayer';
+import Cart from './pages/cart/Cart';
+import Checkout from './pages/cart/Checkout';
+
+
 
 const App = () => {
   return (
@@ -20,6 +27,11 @@ const App = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<InstructorDashboard/>} />
         <Route path="/landing" element={<StudentLandingPage/>} />
+        <Route path="/course/:courseId" element={<CourseContent/>} />
+        <Route path="/courses" element={<ProfileCourses/>} />
+        <Route path="/video/:courseId/:lectureId" element={<VideoPlayer />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
         
 
 
