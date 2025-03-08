@@ -1,0 +1,20 @@
+{
+  "name": "shakham",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "client-install": "cd client && npm install",
+    "server-install": "cd server && npm install",
+    "install-all": "npm install && npm run client-install && npm run server-install",
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run client\" \"npm run server\" --kill-others --names \"CLIENT,SERVER\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\" --prefix \"[{name}]\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
