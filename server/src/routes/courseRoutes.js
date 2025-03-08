@@ -43,7 +43,10 @@ router.get("/", async (req, res) => {
 // ✅ GET course by ID (Students & Teachers)
 router.get("/:id", async (req, res) => {
     try {
-        const course = await Course.findById(req.params.id).populate("teacher", "username email");
+        const course = await Course.findById(req.params.id)
+            .populate("teacher", "username email")
+            .populate("reviews.student", "username email");
+
         if (!course) {
             return res.status(404).json({ message: "Course not found!" });
         }
@@ -52,6 +55,41 @@ router.get("/:id", async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
+
+router.post("/:id/review", authMiddleware, async (req, res) => {
+    try {
+        if (req.user.role !== "student") {
+            return res.status(403).json({ message: "Only students can review courses!" });
+        }
+
+        const { rating, comment } = req.body;
+        const course = await Course.findById(req.params.id);
+
+        if (!course) {
+            return res.status(404).json({ message: "Course not found!" });
+        }
+
+        const newReview = {
+            student: req.user.userId,
+            rating,
+            comment
+        };
+
+        course.reviews.push(newReview);
+
+        // Update course rating (average of all reviews)
+        const totalRatings = course.reviews.reduce((sum, review) => sum + review.rating, 0);
+        course.rating = totalRatings / course.reviews.length;
+
+        await course.save();
+
+        res.status(201).json({ message: "Review added successfully!", course });
+
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
 
 // ❌ Only Teachers Can Create a Course with Video
 router.post("/", authMiddleware, upload.single("video"), async (req, res) => {
