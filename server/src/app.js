@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import './config/db.js';
 import courseRoutes from "./routes/courseRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import generateCertificateRoute from "./routes/generate-certificate.js"; 
 
 import path from "path";
 
@@ -26,6 +27,7 @@ app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")
 
 app.use(httpLogger); 
 app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")));
+app.use("/api", generateCertificateRoute);
 
 app.use(express.json());
 
@@ -49,3 +51,24 @@ app.use((req, res, next) => {
 app.use(errorMiddleware);
 
 export default app;
+
+/*
+
+const downloadCertificate = async (userId, course) => {
+    const response = await fetch(`http://localhost:5000/api/generate-certificate/${userId}/${course}`);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${course}-certificate.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
+// Example Usage in a Button
+<button onClick={() => downloadCertificate("65f1c8a0a27e3b001d4a5d8f", "AI & Machine Learning for Beginners")}>
+    Download Certificate
+</button>;
+
+*/
