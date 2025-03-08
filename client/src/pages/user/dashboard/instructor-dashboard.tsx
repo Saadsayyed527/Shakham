@@ -52,33 +52,33 @@ export default function InstructorDashboard() {
       return
     }
 
-    const fetchInstructorData = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch("/api/instructor/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+    // const fetchInstructorData = async () => {
+    //   try {
+    //     setLoading(true)
+    //     const response = await fetch("/api/instructor/profile", {
+    //       headers: {
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //     })
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch instructor data")
-        }
+    //     if (!response.ok) {
+    //       throw new Error("Failed to fetch instructor data")
+    //     }
 
-        const data = await response.json()
-        setInstructorData(data)
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load instructor data. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
+    //     const data = await response.json()
+    //     setInstructorData(data)
+    //   } catch (error) {
+    //     toast({
+    //       title: "Error",
+    //       description: "Failed to load instructor data. Please try again.",
+    //       variant: "destructive",
+    //     })
+    //   } finally {
+    //     setLoading(false)
+    //   }
+    // }
 
-    fetchInstructorData()
+    // fetchInstructorData()
   }, [navigate, toast])
 
   const handleLogout = () => {
