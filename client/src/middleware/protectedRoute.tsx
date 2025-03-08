@@ -1,23 +1,11 @@
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/authContext";
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAppSelector } from '../store/hooks';
 
-interface ProtectedRouteProps {
-  element: JSX.Element;
-  role: "Teacher" | "Student";
-}
+const ProtectedRoute: React.FC = () => {
+  const { token } = useAppSelector((state) => state.auth);
 
-const ProtectedRoute = ({ element, role }: ProtectedRouteProps) => {
-  const { user } = useAuth();
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user.role !== role) {
-    return <Navigate to={user.role === "Teacher" ? "/Teacher" : "/Student"} replace />;
-  }
-
-  return element;
+  return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default ProtectedRoute;
