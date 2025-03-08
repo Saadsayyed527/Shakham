@@ -6,13 +6,22 @@ import CustomError from "./utils/CustomError.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
 import './config/db.js';
+import courseRoutes from "./routes/courseRoutes.js";
+import path from "path";
 
 import authRoutes from './routes/authRoutes.js';
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 dotenv.config();
 
 const app = express();
+app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")));
+
 app.use(httpLogger); 
+app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")));
 
 app.use(express.json());
 
@@ -23,6 +32,7 @@ app.use(cors());
 // });
 
 app.use('/api/auth', authRoutes);
+app.use("/api/courses", courseRoutes);
 
 app.use((req, res, next) => {
     if (req.path === "/favicon.ico") return res.status(204).end();
