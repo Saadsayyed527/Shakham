@@ -1,5 +1,5 @@
 import React from "react";
-import { RegisterForm } from "@/components/register-form";
+import { StudentRegisterForm } from "@/components/register-form";
 import { Link   } from "react-router-dom";
 import axios from "axios";
 const RegisterPage: React.FC = () => {
@@ -44,13 +44,14 @@ const RegisterPage: React.FC = () => {
             <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
             <p className="text-sm text-gray-500">Enter your details to create your Evolve account</p>
           </div>
-          <RegisterForm />
+          <StudentRegisterForm />
           <p className="px-8 text-center text-sm text-gray-500">
             Already have an account?{' '}
-            <Link to="/" className="underline underline-offset-4 hover:text-blue-500">
+            <Link to="/login" className="underline underline-offset-4 hover:text-blue-500">
               Login
             </Link>
           </p>
+         
         </div>
       </div>
     </div>
