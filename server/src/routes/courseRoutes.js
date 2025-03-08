@@ -92,14 +92,14 @@ router.post("/:id/review", authMiddleware, async (req, res) => {
 
 
 // ❌ Only Teachers Can Create a Course with Video
-router.post("/", authMiddleware, upload.single("video"), async (req, res) => {
+// ❌ Only Teachers Can Create a Course with a Video Link
+router.post("/", authMiddleware, async (req, res) => {
     try {
         if (req.user.role !== "teacher") {
             return res.status(403).json({ message: "Only teachers can add courses!" });
         }
 
-        const { title, description, price, category, rating } = req.body;
-        const videoPath = req.file ? `/uploads/videos/${req.file.filename}` : null;
+        const { title, description, price, category, rating, videoUrl } = req.body;
 
         const newCourse = new Course({
             title,
@@ -108,7 +108,7 @@ router.post("/", authMiddleware, upload.single("video"), async (req, res) => {
             category,
             rating,
             teacher: req.user.userId,
-            videos: videoPath ? [videoPath] : []
+            videos: videoUrl ? [videoUrl] : [] // Store YouTube link instead of an uploaded file
         });
 
         await newCourse.save();
