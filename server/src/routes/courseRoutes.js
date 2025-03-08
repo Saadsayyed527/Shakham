@@ -190,4 +190,28 @@ router.get("/filter", async (req, res) => {
     }
 });
 
+router.get("/search", async (req, res) => {
+    try {
+        const { title } = req.query;
+
+        if (!title) {
+            return res.status(400).json({ message: "Please provide a search query!" });
+        }
+
+        // Case-insensitive search for title containing the query
+        const courses = await Course.find({
+            title: { $regex: title, $options: "i" }
+        }).populate("teacher", "username email");
+
+        if (courses.length === 0) {
+            return res.status(404).json({ message: "No courses found!" });
+        }
+
+        res.status(200).json(courses);
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+
 export default router;
