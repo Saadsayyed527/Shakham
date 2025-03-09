@@ -2,716 +2,349 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Search, Calendar, Clock, Star, ChevronLeft, ChevronRight, Filter, BookOpen } from 'lucide-react'
+import { Star, Book, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useSelector } from 'react-redux'
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { PromotionCarousel } from "./promotional-carousel"
-import { CategoryCards } from "./category-cards"
-import { Footer } from "./footer"
+import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
 
-// Interfaces
 interface Course {
+
   id: string
   title: string
-  instructor: string
-  thumbnail: string
+  description: string
+  instructor?: string
+  thumbnail?: string
   price: number
   discountedPrice?: number
   rating: number
-  totalRatings: number
-  totalStudents: number
-  duration: string
-  level: "Beginner" | "Intermediate" | "Advanced" | "All Levels"
-  category: string
-  tags: string[]
-  isPopular?: boolean
-  isNew?: boolean
+  videoUrl:string
+
 }
 
-interface FilterState {
-  categories: string[]
-  levels: string[]
-  priceRange: string
-  duration: string
+interface RootState {
+  auth: {
+    user: {
+      userId: string
+      name: string
+      email: string
+      role: string
+      token: string
+    } | null
+  }
+}
+
+function Carousel({ courses }: { courses: Course[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const navigate = useNavigate()
+
+  const nextSlide = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % courses.length)
+  }
+
+  const prevSlide = () => {
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + courses.length) % courses.length)
+  }
+
+  useEffect(() => {
+    const interval = setInterval(nextSlide, 5000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (!courses.length) return null
+
+  const course = courses[currentIndex]
+
+  return (
+    <div className="relative w-full h-[500px] overflow-hidden">
+      {/* Background Image with Gradient */}
+      <div className="absolute inset-0">
+        {course.thumbnail ? (
+          <img
+            src={course.thumbnail}
+            alt={course.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-blue-600 to-indigo-600" />
+        )}
+        <div className="absolute inset-0 bg-black/50" />
+      </div>
+
+      {/* Content */}
+      <div className="relative h-full flex items-center">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl text-white">
+            <h1 className="text-4xl font-bold mb-4">{course.title}</h1>
+            <p className="text-lg mb-6">{course.description}</p>
+            <div className="flex items-center gap-4 mb-6">
+              {course.instructor && (
+                <div className="flex items-center gap-2">
+                  <span>By {course.instructor}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                <span>{course.rating.toFixed(1)}</span>
+                {course.totalRatings && (
+                  <span>({course.totalRatings} ratings)</span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button
+                size="lg"
+                onClick={() => navigate(`/course/${course._id}`)}
+              >
+                View Course
+              </Button>
+              <div className="text-2xl font-bold">
+                {course.discountedPrice ? (
+                  <div className="flex items-center gap-2">
+                    <span>₹{course.discountedPrice}</span>
+                    <span className="text-lg text-gray-400 line-through">₹{course.price}</span>
+                  </div>
+                ) : (
+                  <span>₹{course.price}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Buttons */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <button
+          onClick={nextSlide}
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
+
+        {/* Indicators */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          {courses.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`h-2 rounded-full transition-all ${
+                index === currentIndex ? "w-8 bg-white" : "w-2 bg-white/50"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function LandingPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
   const [courses, setCourses] = useState<Course[]>([])
-  const [recommendedCourses, setRecommendedCourses] = useState<Course[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const coursesPerPage = 6
-  
-  // Filter states
-  const [filters, setFilters] = useState<FilterState>({
-    categories: [],
-    levels: [],
-    priceRange: "all",
-    duration: "all"
-  })
-  
-  const [sortOption, setSortOption] = useState("popular")
+
+  // Get user from Redux store
+  const user = useSelector((state: RootState) => state.auth.user)
 
   // Fetch courses
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         setLoading(true)
-        const token = localStorage.getItem("token")
-        
+        const token = localStorage.getItem('token')
         if (!token) {
-          navigate("/login")
+          navigate('/login')
           return
         }
-
-        // Construct query params
-        const params = new URLSearchParams()
-        params.append("page", currentPage.toString())
-        params.append("limit", coursesPerPage.toString())
-        if (searchQuery) params.append("search", searchQuery)
-        if (sortOption) params.append("sort", sortOption)
-        if (filters.categories.length) params.append("categories", filters.categories.join(","))
-        if (filters.levels.length) params.append("levels", filters.levels.join(","))
-        if (filters.priceRange !== "all") params.append("priceRange", filters.priceRange)
-        if (filters.duration !== "all") params.append("duration", filters.duration)
-
-        const response = await fetch(`/api/courses?${params.toString()}`, {
+        const response = await fetch('http://localhost:5000/api/courses', {
           headers: {
-            Authorization: `Bearer ${token}`
+            'Authorization': `Bearer ${token}`
           }
         })
-
         if (!response.ok) {
-          throw new Error("Failed to fetch courses")
+          
+          return
         }
-
         const data = await response.json()
-        setCourses(data.courses)
-        setTotalPages(data.totalPages)
-        
-        // Also fetch recommended courses
-        const recommendedResponse = await fetch("/api/courses/recommended", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-        
-        if (recommendedResponse.ok) {
-          const recommendedData = await recommendedResponse.json()
-          setRecommendedCourses(recommendedData.courses)
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load courses. Please try again.",
-          variant: "destructive"
-        })
-        
-        // Set sample data for preview
-        const sampleCourses = generateSampleCourses()
-        setCourses(sampleCourses.slice(0, coursesPerPage))
-        setTotalPages(Math.ceil(sampleCourses.length / coursesPerPage))
-        setRecommendedCourses(sampleCourses.slice(0, 4))
-      } finally {
+        setCourses(data)
         setLoading(false)
-      }
-    }
+      } catch (error) {
 
-    fetchCourses()
-  }, [navigate, toast, currentPage, searchQuery, sortOption, filters])
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setCurrentPage(1) // Reset to first page on new search
-  }
-
-  const handleFilterChange = (filterType: keyof FilterState, value: string | string[]) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: value
-    }))
-    setCurrentPage(1) // Reset to first page when filter changes
-  }
-
-  const handleCategoryClick = (category: string) => {
-    setFilters(prev => ({
-      ...prev,
-      categories: [category]
-    }))
-    setCurrentPage(1)
-    window.scrollTo({
-      top: document.getElementById('courses-section')?.offsetTop || 0,
-      behavior: 'smooth'
-    })
-  }
-
-  const clearFilters = () => {
-    setFilters({
-      categories: [],
-      levels: [],
-      priceRange: "all",
-      duration: "all"
-    })
-    setSearchQuery("")
-    setCurrentPage(1)
-  }
+        console.error(error)
+    
+    
+      }}
+      fetchCourses()
+  }, [])
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header with Search */}
-      <header className="bg-background py-4 border-b">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between">
-          <h1 className="text-2xl font-bold mb-4 md:mb-0">Evolve Learning Platform</h1>
-          <form onSubmit={handleSearch} className="w-full md:w-auto flex items-center space-x-2">
-            <Input
-              type="search"
-              placeholder="Search for courses..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-80"
-            />
-            <Button type="submit">
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-          </form>
-        </div>
-      </header>
 
-      <main className="flex-1">
-        {/* Promotions Carousel */}
-        <section className="py-6 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <PromotionCarousel />
-          </div>
-        </section>
-        
-        {/* Domain Categories */}
-        <section className="py-8">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-6">Explore Categories</h2>
-            <CategoryCards onCategoryClick={handleCategoryClick} />
-          </div>
-        </section>
-        
-        {/* Courses Section */}
-        <section id="courses-section" className="py-8">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-              <h2 className="text-2xl font-bold">Browse Courses</h2>
-              <div className="flex items-center mt-4 sm:mt-0 space-x-2">
-                {/* Filter Button - For Mobile */}
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="sm:hidden">
-                      <Filter className="h-4 w-4 mr-2" />
-                      Filters
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left">
-                    <SheetHeader>
-                      <SheetTitle>Filters</SheetTitle>
-                      <SheetDescription>
-                        Filter courses by category, level, price, and duration.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Categories</h3>
-                        {categories.map((category) => (
-                          <div key={category} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`mobile-category-${category}`}
-                              checked={filters.categories.includes(category)}
-                              onChange={(e) => {
-                                const newCategories = e.target.checked
-                                  ? [...filters.categories, category]
-                                  : filters.categories.filter(c => c !== category);
-                                handleFilterChange('categories', newCategories);
-                              }}
-                              className="h-4 w-4 rounded border-gray-300"
-                            />
-                            <label htmlFor={`mobile-category-${category}`} className="text-sm">
-                              {category}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Level</h3>
-                        {levels.map((level) => (
-                          <div key={level} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`mobile-level-${level}`}
-                              checked={filters.levels.includes(level)}
-                              onChange={(e) => {
-                                const newLevels = e.target.checked
-                                  ? [...filters.levels, level]
-                                  : filters.levels.filter(l => l !== level);
-                                handleFilterChange('levels', newLevels);
-                              }}
-                              className="h-4 w-4 rounded border-gray-300"
-                            />
-                            <label htmlFor={`mobile-level-${level}`} className="text-sm">
-                              {level}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Price Range</h3>
-                        <Select
-                          value={filters.priceRange}
-                          onValueChange={(value) => handleFilterChange('priceRange', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select price range" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Prices</SelectItem>
-                            <SelectItem value="free">Free</SelectItem>
-                            <SelectItem value="paid">Paid</SelectItem>
-                            <SelectItem value="under500">Under ₹500</SelectItem>
-                            <SelectItem value="500to1000">₹500 - ₹1000</SelectItem>
-                            <SelectItem value="1000to2000">₹1000 - ₹2000</SelectItem>
-                            <SelectItem value="over2000">Over ₹2000</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Duration</h3>
-                        <Select
-                          value={filters.duration}
-                          onValueChange={(value) => handleFilterChange('duration', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select duration" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Any Duration</SelectItem>
-                            <SelectItem value="short">Short (0-3 hours)</SelectItem>
-                            <SelectItem value="medium">Medium (3-6 hours)</SelectItem>
-                            <SelectItem value="long">Long (6+ hours)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <SheetFooter>
-                      <SheetClose asChild>
-                        <Button variant="outline" onClick={clearFilters}>Reset Filters</Button>
-                      </SheetClose>
-                      <SheetClose asChild>
-                        <Button>Apply Filters</Button>
-                      </SheetClose>
-                    </SheetFooter>
-                  </SheetContent>
-                </Sheet>
-                
-                {/* Desktop Filters - Dropdowns */}
-                <div className="hidden sm:flex items-center space-x-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline">
-                        <Filter className="h-4 w-4 mr-2" />
-                        Categories
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                      <DropdownMenuLabel>Select Categories</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {categories.map((category) => (
-                        <DropdownMenuCheckboxItem
-                          key={category}
-                          checked={filters.categories.includes(category)}
-                          onCheckedChange={(checked) => {
-                            const newCategories = checked
-                              ? [...filters.categories, category]
-                              : filters.categories.filter(c => c !== category);
-                            handleFilterChange('categories', newCategories);
-                          }}
-                        >
-                          {category}
-                        </DropdownMenuCheckboxItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline">Level</Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                      <DropdownMenuLabel>Select Levels</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {levels.map((level) => (
-                        <DropdownMenuCheckboxItem
-                          key={level}
-                          checked={filters.levels.includes(level)}
-                          onCheckedChange={(checked) => {
-                            const newLevels = checked
-                              ? [...filters.levels, level]
-                              : filters.levels.filter(l => l !== level);
-                            handleFilterChange('levels', newLevels);
-                          }}
-                        >
-                          {level}
-                        </DropdownMenuCheckboxItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  
-                  <Select
-                    value={filters.priceRange}
-                    onValueChange={(value) => handleFilterChange('priceRange', value)}
-                  >
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="Price" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Prices</SelectItem>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="under500">Under ₹500</SelectItem>
-                      <SelectItem value="500to1000">₹500 - ₹1000</SelectItem>
-                      <SelectItem value="1000to2000">₹1000 - ₹2000</SelectItem>
-                      <SelectItem value="over2000">Over ₹2000</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select
-                    value={filters.duration}
-                    onValueChange={(value) => handleFilterChange('duration', value)}
-                  >
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Duration" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any Duration</SelectItem>
-                      <SelectItem value="short">Short (0-3 hours)</SelectItem>
-                      <SelectItem value="medium">Medium (3-6 hours)</SelectItem>
-                      <SelectItem value="long">Long (6+ hours)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Button variant="outline" onClick={clearFilters} size="sm">
-                    Reset
-                  </Button>
-                </div>
-                
-                <Select
-                  value={sortOption}
-                  onValueChange={setSortOption}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="popular">Most Popular</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            {/* Active Filters Display */}
-            {(filters.categories.length > 0 || filters.levels.length > 0 || 
-              filters.priceRange !== 'all' || filters.duration !== 'all' || searchQuery) && (
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                {searchQuery && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Search: {searchQuery}
-                    <button onClick={() => setSearchQuery("")} className="ml-1 hover:text-destructive">
-                      ×
-                    </button>
-                  </Badge>
-                )}
-                
-                {filters.categories.map(category => (
-                  <Badge key={category} variant="secondary" className="flex items-center gap-1">
-                    {category}
-                    <button 
-                      onClick={() => handleFilterChange('categories', filters.categories.filter(c => c !== category))}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-                
-                {filters.levels.map(level => (
-                  <Badge key={level} variant="secondary" className="flex items-center gap-1">
-                    {level}
-                    <button 
-                      onClick={() => handleFilterChange('levels', filters.levels.filter(l => l !== level))}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-                
-                {filters.priceRange !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    {getPriceRangeLabel(filters.priceRange)}
-                    <button 
-                      onClick={() => handleFilterChange('priceRange', 'all')}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                )}
-                
-                {filters.duration !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    {getDurationLabel(filters.duration)}
-                    <button 
-                      onClick={() => handleFilterChange('duration', 'all')}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                )}
-                
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 px-2 text-xs">
-                  Clear All
-                </Button>
-              </div>
-            )}
-            
-            {/* Course Grid */}
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, index) => (
-                  <Card key={index} className="animate-pulse">
-                    <div className="h-44 bg-muted rounded-t-lg" />
-                    <CardHeader>
-                      <div className="h-6 bg-muted rounded w-3/4" />
-                      <div className="h-4 bg-muted rounded w-1/2 mt-2" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-4 bg-muted rounded w-full mb-2" />
-                      <div className="h-4 bg-muted rounded w-5/6" />
-                    </CardContent>
-                    <CardFooter>
-                      <div className="h-8 bg-muted rounded w-full" />
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : courses.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course) => (
-                  <CourseCard key={course.id} course={course} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-10">
-                <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No courses found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your search or filter criteria
-                </p>
-                <Button onClick={clearFilters}>Clear Filters</Button>
-              </div>
-            )}
-            
-            {/* Pagination */}
-            {!loading && courses.length > 0 && (
-              <div className="flex justify-center items-center mt-8 space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </section>
-        
-        {/* Recommended Section */}
-        {recommendedCourses.length > 0 && (
-          <section className="py-8 bg-muted/30">
-            <div className="container mx-auto px-4">
-              <h2 className="text-2xl font-bold mb-6">Recommended For You</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {recommendedCourses.map((course) => (
-                  <CourseCard key={course.id} course={course} isCompact />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-      </main>
       
+      {/* Featured Courses Carousel */}
+      {!loading && courses.length > 0 && (
+        <Carousel courses={courses.filter(course => course.isPopular)} />
+      )}
+      
+      {/* Courses */}
+      <section className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6">All Courses</h2>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array(6).fill(null).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-6 w-3/4 bg-muted rounded" />
+                  <div className="h-4 w-1/2 bg-muted rounded mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="h-4 w-full bg-muted rounded" />
+                    <div className="h-4 w-5/6 bg-muted rounded" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : courses.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {courses.map((course) => (
+              <CourseCard 
+                key={course._id} 
+                course={course} 
+                isTeacher={user?.role === "teacher" && user?.userId === course.teacher}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <h3 className="text-lg font-semibold mb-2">No courses found</h3>
+            <p className="text-muted-foreground mb-4">
+              Check back later for new courses
+            </p>
+          </div>
+        )}
+      </section>
+
       <Footer />
     </div>
   )
 }
 
-// Helper components
-
 interface CourseCardProps {
   course: Course
-  isCompact?: boolean
+  isTeacher: boolean
 }
 
-function CourseCard({ course, isCompact = false }: CourseCardProps) {
+function CourseCard({ course, isTeacher }: CourseCardProps) {
   const navigate = useNavigate()
-  
+
   return (
-    <Card className="overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow duration-200">
-      <div 
-        className="relative h-44 bg-muted cursor-pointer"
-        onClick={() => navigate(`/courses/${course.id}`)}
-      >
-        <img 
-          src={course.thumbnail || `/placeholder.svg?height=176&width=360`} 
-          alt={course.title}
-          className="w-full h-full object-cover"
-        />
-        {course.discountedPrice && (
-          <Badge className="absolute top-2 right-2 bg-red-500">
-            {Math.round(((course.price - course.discountedPrice) / course.price) * 100)}% OFF
-          </Badge>
-        )}
-        {course.isNew && (
-          <Badge className="absolute top-2 left-2 bg-blue-500">NEW</Badge>
-        )}
-      </div>
-      <CardHeader className="p-4 pb-2">
-        <CardTitle 
-          className={`line-clamp-2 cursor-pointer hover:text-primary ${isCompact ? 'text-base' : 'text-lg'}`}
-          onClick={() => navigate(`/courses/${course.id}`)}
-        >
-          {course.title}
-        </CardTitle>
-        <CardDescription className="flex items-center">
-          {course.instructor}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className={`px-4 pb-0 ${isCompact ? 'pt-0' : 'pt-2'}`}>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <div className="flex items-center">
-            <Star className="h-4 w-4 fill-amber-400 text-amber-400 mr-1" />
-            <span>{course.rating.toFixed(1)}</span>
-            <span className="ml-1 text-xs">({course.totalRatings})</span>
-          </div>
-          <Separator orientation="vertical" className="mx-2 h-4" />
-          <div className="flex items-center">
-            <Clock className="h-3.5 w-3.5 mr-1" />
-            <span>{course.duration}</span>
-          </div>
-          {!isCompact && (
-            <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
-              <div className="flex items-center">
-                <Calendar className="h-3.5 w-3.5 mr-1" />
-                <span>{course.level}</span>
-              </div>
-            </>
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <CardHeader>
+        <div className="relative">
+          {course.thumbnail ? (
+            <img
+              src={course.thumbnail}
+              alt={course.title}
+              className="w-full h-40 object-cover rounded-t-lg"
+            />
+          ) : (
+            <div className="w-full h-40 bg-muted rounded-t-lg flex items-center justify-center">
+              <Book className="h-12 w-12 text-muted-foreground" />
+            </div>
+          )}
+          {course.isNew && (
+            <span className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs">
+              New
+            </span>
+          )}
+          {course.isPopular && (
+            <span className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs">
+              Popular
+            </span>
           )}
         </div>
-        
-        {!isCompact && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {course.tags.slice(0, 3).map(tag => (
-              <Badge key={tag} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {course.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{course.tags.length - 3} more
-              </Badge>
-            )}
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="p-4 pt-2 mt-auto">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center">
-            {course.discountedPrice ? (
-              <>
-                <span className="font-bold text-lg">₹{course.discountedPrice}</span>
-                <span className="ml-2 line-through text-muted-foreground text-sm">
-                  ₹{course.price}
+        <CardTitle className="line-clamp-2 mt-4">{course.title}</CardTitle>
+        <CardDescription className="flex flex-col gap-1">
+          <span>Category: {course.category}</span>
+          {course.level && <span>Level: {course.level}</span>}
+          {course.duration && <span>Duration: {course.duration}</span>}
+          {course.instructor && <span>Instructor: {course.instructor}</span>}
+          {course.tags && course.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {course.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs"
+                >
+                  {tag}
                 </span>
-              </>
-            ) : course.price === 0 ? (
-              <span className="font-bold text-lg text-green-600">Free</span>
-            ) : (
-              <span className="font-bold text-lg">₹{course.price}</span>
+              ))}
+            </div>
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+          {course.description}
+        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span>{course.rating.toFixed(1)}</span>
+            </div>
+            {course.totalRatings && (
+              <span className="text-sm text-muted-foreground">
+                ({course.totalRatings} ratings)
+              </span>
             )}
           </div>
-          <Button 
-            size={isCompact ? "sm" : "default"}
-            onClick={() => navigate(`/courses/${course.id}`)}
+          {course.totalStudents && (
+            <span className="text-sm text-muted-foreground">
+              {course.totalStudents} students
+            </span>
+          )}
+        </div>
+      </CardContent>
+      <CardFooter className="flex items-center justify-between">
+        <div>
+          {course.discountedPrice ? (
+            <div className="flex flex-col">
+              <span className="text-lg font-bold">₹{course.discountedPrice}</span>
+              <span className="text-sm text-muted-foreground line-through">₹{course.price}</span>
+            </div>
+          ) : (
+            <span className="text-lg font-bold">₹{course.price}</span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {isTeacher && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/dashboard/course/${course._id}/edit`)}
+            >
+              Edit
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate(`/course/${course._id}`)}
           >
-            View Course
+            View Details
           </Button>
         </div>
       </CardFooter>
@@ -719,230 +352,72 @@ function CourseCard({ course, isCompact = false }: CourseCardProps) {
   )
 }
 
-// Helper functions and sample data
 function generateSampleCourses(): Course[] {
-  const sampleCourses: Course[] = [
+  return [
     {
-      id: "1",
-      title: "Complete Web Development Bootcamp 2023",
-      instructor: "Dr. Angela Yu",
-      thumbnail: "/placeholder.svg?height=176&width=360",
+      _id: "1",
+      title: "Complete Web Development Bootcamp",
+      description: "Learn web development from scratch with HTML, CSS, JavaScript, React, and Node.js",
+      instructor: "John Doe",
+      thumbnail: "https://res.cloudinary.com/dkijqjo8r/image/upload/v1741471291/web-dev.jpg",
       price: 1999,
-      discountedPrice: 499,
-      rating: 4.7,
-      totalRatings: 482,
-      totalStudents: 2540,
-      duration: "42h 30m",
-      level: "All Levels",
-      category: "Web Development",
-      tags: ["HTML", "CSS", "JavaScript", "React", "Node.js"],
-      isPopular: true,
-      isNew: false,
-    },
-    {
-      id: "2",
-      title: "Machine Learning A-Z: Hands-On Python & R",
-      instructor: "Kirill Eremenko",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 2499,
-      rating: 4.5,
-      totalRatings: 356,
-      totalStudents: 1800,
-      duration: "38h 15m",
-      level: "Intermediate",
-      category: "Data Science",
-      tags: ["Python", "R", "Machine Learning", "Data Science"],
-      isPopular: true,
-    },
-    {
-      id: "3",
-      title: "Modern JavaScript: From Fundamentals to Advanced",
-      instructor: "Maximilian Schwarzmüller",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 1799,
-      discountedPrice: 599,
+      discountedPrice: 1499,
       rating: 4.8,
-      totalRatings: 290,
-      totalStudents: 1450,
-      duration: "28h 45m",
+      totalRatings: 150,
+      totalStudents: 1000,
+      duration: "20 hours",
       level: "Beginner",
       category: "Programming",
-      tags: ["JavaScript", "ES6", "APIs", "Async/Await"],
-    },
-    {
-      id: "4",
-      title: "Advanced React and Redux: 2023 Edition",
-      instructor: "Stephen Grider",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 1899,
-      rating: 4.6,
-      totalRatings: 215,
-      totalStudents: 1220,
-      duration: "24h 10m",
-      level: "Intermediate",
-      category: "Web Development",
-      tags: ["React", "Redux", "Frontend", "JavaScript"],
-    },
-    {
-      id: "5",
-      title: "Python for Data Science and Machine Learning Bootcamp",
-      instructor: "Jose Portilla",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 1299,
-      discountedPrice: 449,
-      rating: 4.5,
-      totalRatings: 332,
-      totalStudents: 1680,
-      duration: "22h 30m",
-      level: "Intermediate",
-      category: "Data Science",
-      tags: ["Python", "NumPy", "Pandas", "Matplotlib", "Scikit-Learn"],
-    },
-    {
-      id: "6",
-      title: "The Complete Android 12 & Kotlin Development Masterclass",
-      instructor: "Paulo Dichone",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 2299,
-      rating: 4.4,
-      totalRatings: 178,
-      totalStudents: 920,
-      duration: "32h 15m",
-      level: "All Levels",
-      category: "Mobile Development",
-      tags: ["Android", "Kotlin", "Mobile", "Firebase"],
-      isNew: true,
-    },
-    {
-      id: "7",
-      title: "AWS Certified Solutions Architect - Associate",
-      instructor: "Stephane Maarek",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 3499,
-      discountedPrice: 1299,
-      rating: 4.7,
-      totalRatings: 412,
-      totalStudents: 2100,
-      duration: "27h 20m",
-      level: "Intermediate",
-      category: "Cloud Computing",
-      tags: ["AWS", "Cloud", "DevOps", "Architecture"],
+      tags: ["JavaScript", "React", "Node.js"],
       isPopular: true,
+      isNew: true,
+      videos: [
+        "https://res.cloudinary.com/dkijqjo8r/video/upload/v1741471291/13168516_1920_1080_24fps_yqdlbs.mp4"
+      ],
+      teacher: "user123"
     },
     {
-      id: "8",
-      title: "UI/UX Design: Create Modern Web Experiences",
-      instructor: "Daniel Walter Scott",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 1599,
-      rating: 4.8,
-      totalRatings: 264,
-      totalStudents: 1340,
-      duration: "18h 45m",
-      level: "Beginner",
+      _id: "2",
+      title: "UI/UX Design Masterclass",
+      description: "Master modern UI/UX design principles and create stunning user interfaces",
+      instructor: "Sarah Wilson",
+      thumbnail: "https://res.cloudinary.com/dkijqjo8r/image/upload/v1741471291/design.jpg",
+      price: 2499,
+      discountedPrice: 1999,
+      rating: 4.9,
+      totalRatings: 200,
+      totalStudents: 1500,
+      duration: "25 hours",
+      level: "Intermediate",
       category: "Design",
-      tags: ["UI/UX", "Figma", "Adobe XD", "Design Principles"],
+      tags: ["UI", "UX", "Figma"],
+      isPopular: true,
+      isNew: false,
+      videos: [
+        "https://res.cloudinary.com/dkijqjo8r/video/upload/v1741471291/13168516_1920_1080_24fps_yqdlbs.mp4"
+      ],
+      teacher: "user456"
     },
     {
-      id: "9",
-      title: "Complete Digital Marketing Course - 12 Courses in 1",
-      instructor: "Rob Percival & Daragh Walsh",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 1999,
-      discountedPrice: 599,
-      rating: 4.5,
-      totalRatings: 352,
-      totalStudents: 1820,
-      duration: "38h 30m",
+      _id: "3",
+      title: "Digital Marketing Fundamentals",
+      description: "Learn essential digital marketing strategies and tools",
+      instructor: "Mike Brown",
+      thumbnail: "https://res.cloudinary.com/dkijqjo8r/image/upload/v1741471291/marketing.jpg",
+      price: 1799,
+      rating: 4.7,
+      totalRatings: 120,
+      totalStudents: 800,
+      duration: "15 hours",
       level: "All Levels",
       category: "Marketing",
-      tags: ["SEO", "Facebook Ads", "Google Ads", "Social Media"],
-    },
-    {
-      id: "10",
-      title: "The Complete 2023 Flutter Development Bootcamp",
-      instructor: "Dr. Angela Yu",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 1899,
-      rating: 4.6,
-      totalRatings: 220,
-      totalStudents: 1120,
-      duration: "26h 15m",
-      level: "Beginner",
-      category: "Mobile Development",
-      tags: ["Flutter", "Dart", "Mobile", "Cross-Platform"],
+      tags: ["SEO", "Social Media", "Analytics"],
+      isPopular: false,
       isNew: true,
-    },
-    {
-      id: "11",
-      title: "Blockchain A-Z™: Learn Blockchain Technology",
-      instructor: "Hadelin de Ponteves",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 1599,
-      discountedPrice: 499,
-      rating: 4.4,
-      totalRatings: 186,
-      totalStudents: 980,
-      duration: "14h 30m",
-      level: "Intermediate",
-      category: "Blockchain",
-      tags: ["Blockchain", "Cryptocurrency", "Smart Contracts"],
-    },
-    {
-      id: "12",
-      title: "Learn Ethical Hacking From Scratch",
-      instructor: "Zaid Sabih",
-      thumbnail: "/placeholder.svg?height=176&width=360",
-      price: 1999,
-      rating: 4.6,
-      totalRatings: 328,
-      totalStudents: 1650,
-      duration: "24h 45m",
-      level: "All Levels",
-      category: "Cybersecurity",
-      tags: ["Hacking", "Security", "Penetration Testing", "Kali Linux"],
-      isPopular: true,
-    },
+      videos: [
+        "https://res.cloudinary.com/dkijqjo8r/video/upload/v1741471291/13168516_1920_1080_24fps_yqdlbs.mp4"
+      ],
+      teacher: "user789"
+    }
   ]
-
-  return sampleCourses
 }
-
-function getPriceRangeLabel(priceRange: string): string {
-  switch (priceRange) {
-    case "free": return "Free"
-    case "paid": return "Paid"
-    case "under500": return "Under ₹500"
-    case "500to1000": return "₹500 - ₹1000"
-    case "1000to2000": return "₹1000 - ₹2000"
-    case "over2000": return "Over ₹2000"
-    default: return "All Prices"
-  }
-}
-
-function getDurationLabel(duration: string): string {
-  switch (duration) {
-    case "short": return "Short (0-3 hours)"
-    case "medium": return "Medium (3-6 hours)"
-    case "long": return "Long (6+ hours)"
-    default: return "Any Duration"
-  }
-}
-
-// Sample categories
-const categories = [
-  "Web Development",
-  "Data Science",
-  "Mobile Development",
-  "Programming",
-  "Design",
-  "Marketing",
-  "Business",
-  "Finance",
-  "Cloud Computing",
-  "Cybersecurity",
-  "Blockchain",
-]
-
-// Sample levels
-const levels = ["Beginner", "Intermediate", "Advanced", "All Levels"]

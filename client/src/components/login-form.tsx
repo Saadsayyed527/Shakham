@@ -23,11 +23,9 @@ export function LoginForm() {
 
   useEffect(() => {
     if (token) {
-      if (user?.role === "student") {
-        navigate("/landing");
-      } else if (user?.role === "teacher") {
-        navigate("/profile");
-    }}
+
+      navigate("/");
+
   }, [token, navigate]);
 
   const validateForm = () => {
