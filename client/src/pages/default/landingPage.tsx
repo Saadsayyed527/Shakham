@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 import { Star, Book, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useSelector } from 'react-redux'
@@ -8,12 +8,18 @@ import { useSelector } from 'react-redux'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 
 interface Course {
+  totalStudents: any
+  tags: string[]
+  duration: ReactNode
+  level: ReactNode
+  category: ReactNode
+  isPopular: any
+  isNew: any
 
-  id: string
+  _id: string
   title: string
   description: string
   instructor?: string
@@ -21,7 +27,8 @@ interface Course {
   price: number
   discountedPrice?: number
   rating: number
-  videoUrl:string
+  videoUrl?: string
+  totalRatings?: number
 
 }
 
@@ -89,9 +96,6 @@ function Carousel({ courses }: { courses: Course[] }) {
               <div className="flex items-center gap-1">
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                 <span>{course.rating.toFixed(1)}</span>
-                {course.totalRatings && (
-                  <span>({course.totalRatings} ratings)</span>
-                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -165,36 +169,34 @@ export default function LandingPage() {
           navigate('/login')
           return
         }
-        const response = await fetch('http://localhost:5000/api/courses', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/courses`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         })
         if (!response.ok) {
-          
+          // toast.error('Failed to fetch courses')
           return
         }
         const data = await response.json()
         setCourses(data)
         setLoading(false)
       } catch (error) {
-
+        // toast.error('Failed to fetch courses')
         console.error(error)
-    
-    
-      }}
-      fetchCourses()
+      }
+    }
+    fetchCourses()
   }, [])
 
   return (
     <div className="min-h-screen flex flex-col">
 
-      
-      {/* Featured Courses Carousel */}
+      {/* Featured Courses Carousel
       {!loading && courses.length > 0 && (
         <Carousel courses={courses.filter(course => course.isPopular)} />
       )}
-      
+       */}
       {/* Courses */}
       <section className="container mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6">All Courses</h2>
@@ -222,7 +224,7 @@ export default function LandingPage() {
               <CourseCard 
                 key={course._id} 
                 course={course} 
-                isTeacher={user?.role === "teacher" && user?.userId === course.teacher}
+                isTeacher={user?.role === "teacher" && user?.userId === course.instructor}
               />
             ))}
           </div>
@@ -350,74 +352,4 @@ function CourseCard({ course, isTeacher }: CourseCardProps) {
       </CardFooter>
     </Card>
   )
-}
-
-function generateSampleCourses(): Course[] {
-  return [
-    {
-      _id: "1",
-      title: "Complete Web Development Bootcamp",
-      description: "Learn web development from scratch with HTML, CSS, JavaScript, React, and Node.js",
-      instructor: "John Doe",
-      thumbnail: "https://res.cloudinary.com/dkijqjo8r/image/upload/v1741471291/web-dev.jpg",
-      price: 1999,
-      discountedPrice: 1499,
-      rating: 4.8,
-      totalRatings: 150,
-      totalStudents: 1000,
-      duration: "20 hours",
-      level: "Beginner",
-      category: "Programming",
-      tags: ["JavaScript", "React", "Node.js"],
-      isPopular: true,
-      isNew: true,
-      videos: [
-        "https://res.cloudinary.com/dkijqjo8r/video/upload/v1741471291/13168516_1920_1080_24fps_yqdlbs.mp4"
-      ],
-      teacher: "user123"
-    },
-    {
-      _id: "2",
-      title: "UI/UX Design Masterclass",
-      description: "Master modern UI/UX design principles and create stunning user interfaces",
-      instructor: "Sarah Wilson",
-      thumbnail: "https://res.cloudinary.com/dkijqjo8r/image/upload/v1741471291/design.jpg",
-      price: 2499,
-      discountedPrice: 1999,
-      rating: 4.9,
-      totalRatings: 200,
-      totalStudents: 1500,
-      duration: "25 hours",
-      level: "Intermediate",
-      category: "Design",
-      tags: ["UI", "UX", "Figma"],
-      isPopular: true,
-      isNew: false,
-      videos: [
-        "https://res.cloudinary.com/dkijqjo8r/video/upload/v1741471291/13168516_1920_1080_24fps_yqdlbs.mp4"
-      ],
-      teacher: "user456"
-    },
-    {
-      _id: "3",
-      title: "Digital Marketing Fundamentals",
-      description: "Learn essential digital marketing strategies and tools",
-      instructor: "Mike Brown",
-      thumbnail: "https://res.cloudinary.com/dkijqjo8r/image/upload/v1741471291/marketing.jpg",
-      price: 1799,
-      rating: 4.7,
-      totalRatings: 120,
-      totalStudents: 800,
-      duration: "15 hours",
-      level: "All Levels",
-      category: "Marketing",
-      tags: ["SEO", "Social Media", "Analytics"],
-      isPopular: false,
-      isNew: true,
-      videos: [
-        "https://res.cloudinary.com/dkijqjo8r/video/upload/v1741471291/13168516_1920_1080_24fps_yqdlbs.mp4"
-      ],
-      teacher: "user789"
-    }
-  ]
 }

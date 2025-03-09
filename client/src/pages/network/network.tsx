@@ -212,7 +212,7 @@ export default function NetworkPage() {
   }
 
   const handleChatWithUser = (userId: string) => {
-    router.push(`/network/chat/${userId}`)
+    navigate(`/network/chat/${userId}`)
   }
 
   return (
@@ -395,7 +395,7 @@ export default function NetworkPage() {
                 <p className="mt-2 text-muted-foreground max-w-sm">
                   Start connecting with other learners to build your network.
                 </p>
-                <Button className="mt-4" onClick={() => document.querySelector('[value="suggestions"]')?.click()}>
+                <Button className="mt-4" onClick={() => (document.querySelector('[value="suggestions"]') as HTMLElement)?.click()}>
                   Find People
                 </Button>
               </div>

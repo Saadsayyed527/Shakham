@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, JSX } from "react";
 import { Link } from "react-router-dom";
 import { logout } from '../slices/userSlice'
 

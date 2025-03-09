@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 interface User {
+  name: string;
   id: string;
   username: string;
   email: string;
@@ -31,10 +32,10 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, { email, password });
       console.log(response);
       return response.data; // Assuming response includes { user, token }
-    } catch (error) {
+    } catch (error:any) {
       return rejectWithValue(error.response?.data?.message || 'Login failed');
     }
   }
