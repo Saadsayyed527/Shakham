@@ -15,10 +15,12 @@ import ProfileCourses from './pages/course/ProfileCourses';
 import VideoPlayer from './pages/course/videoPlayer';
 import Cart from './pages/cart/Cart';
 import Checkout from './pages/cart/Checkout';
-import RoomPage from './pages/chat/RoomPage';
-import ChatPage from './pages/chat/ChatPage';
+import ClusterCourses from './pages/ClusterCourses';
+// import RoomPage from './pages/chat/RoomPage';
+// import ChatPage from './pages/chat/ChatPage';
+// import CourseRecommendations from './pages/CourseRecommendations';
 
-
+// import CourseRecommendations from './CourseRecommendatio'
 
 const App = () => {
   return (
@@ -35,8 +37,12 @@ const App = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         
-        <Route path="/rooms" element={<RoomPage />} />
-        <Route path="/chat/:room" element={<ChatPage />} />
+        {/* <Route path="/rooms" element={<RoomPage />} />
+        <Route path="/chat/:room" element={<ChatPage />} />*/}
+        {/* <Route path="/recommend/:id" element={<CourseRecommendations />} />  */}
+
+
+        <Route path="/cluster/:clusterId/:startIndex?" element={<ClusterCourses />} />
 
         <Route path="/" element={<Home />} />
       </Routes>
