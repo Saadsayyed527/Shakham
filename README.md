@@ -666,3 +666,15 @@ interface FilterState {
 - Express.js
 - Node.js
 - CORS enabled
+  
+
+## Team Shakham.Inc
+
+Our dedicated team members:
+
+- **Frontend Development**: Dhananjay Kakade
+- **Backend Development**: Saad Sayyed
+- **AI/ML Model**: 
+  - Siddhi Bodake
+  - Prathamesh Ghatmal
+- **Documentation**: Dhananjay Kakade
