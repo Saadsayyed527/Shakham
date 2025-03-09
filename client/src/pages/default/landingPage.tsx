@@ -188,7 +188,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+
       
       {/* Featured Courses Carousel */}
       {!loading && courses.length > 0 && (
