@@ -25,8 +25,14 @@ export function LoginForm() {
     if (token) {
 
       navigate("/");
+    }
+    if (error) {
+      setErrors({ email: error });
+    }
 
-  }, [token, navigate]);
+  },
+
+   [token, navigate]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};

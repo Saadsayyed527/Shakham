@@ -6,7 +6,7 @@ import { logout } from '../slices/userSlice'
 
 import { useSelector, useDispatch } from "react-redux";
 
-import { Menu, Users, MessageSquare, Bell, User } from "lucide-react";
+import { Menu, Users, MessageSquare, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RootState } from "@/store"
 import {
@@ -165,7 +165,20 @@ export default function NetworkNavbar(): JSX.Element {
                         {user.username}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                    {user.role === "teacher"?(
+                        <DropdownMenuItem asChild>
+                            <Link to="/profile" className="text-sm font-medium text-foreground hover:text-primary">
+                                Dashboard
+                            </Link>
+                        </DropdownMenuItem>
+                    )
+                    :(
+                        <DropdownMenuItem asChild>
+                            <Link to="/" className="text-sm font-medium text-foreground hover:text-primary">
+                                Dashboard
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem>Settings</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
