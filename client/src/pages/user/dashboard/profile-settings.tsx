@@ -31,7 +31,7 @@ export function ProfileSettings({ instructorData, setInstructorData }: ProfileSe
       formData.append("name", instructorData.name)
       formData.append("email", instructorData.email)
 
-      const response = await fetch("http://localhost:5000/api/auth/register", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

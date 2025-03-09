@@ -62,7 +62,7 @@ export function VideoManagement() {
       try {
         setLoading(true)
         const token = localStorage.getItem("token")
-        const response = await fetch(`http://localhost:5000/api/courses/${courseId}/videos`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/courses/${courseId}/videos`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -98,7 +98,7 @@ export function VideoManagement() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/videos`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/courses/${courseId}/videos`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -145,7 +145,7 @@ export function VideoManagement() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/videos/${selectedVideo.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/courses/${courseId}/videos/${selectedVideo.id}`, {
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -182,7 +182,7 @@ export function VideoManagement() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/videos/${videoId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/courses/${courseId}/videos/${videoId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -287,7 +287,7 @@ export function VideoManagement() {
                           <DropdownMenuItem onClick={() => {
                             const videoPath = video.videos?.[0];
                             if (videoPath) {
-                              const videoUrl = `http://localhost:5000/${videoPath}`;
+                              const videoUrl = `${import.meta.env.VITE_API_URL}/${videoPath}`;
                               window.open(videoUrl, '_blank');
                             }
                           }}>
@@ -498,7 +498,7 @@ export function VideoManagement() {
                     onClick={() => {
                       const videoPath = selectedVideo.videos?.[0];
                       if (videoPath) {
-                        const videoUrl = `http://localhost:5000/${videoPath}`;
+                        const videoUrl = `${import.meta.env.VITE_API_URL}/${videoPath}`;
                         window.open(videoUrl, '_blank');
                       }
                     }}
@@ -510,7 +510,7 @@ export function VideoManagement() {
                     <video 
                       controls 
                       className="w-full mt-2 rounded-lg" 
-                      src={`http://localhost:5000/${selectedVideo.videos[0]}`}
+                      src={`${import.meta.env.VITE_API_URL}/${selectedVideo.videos[0]}`}
                     >
                       Your browser does not support the video tag.
                     </video>

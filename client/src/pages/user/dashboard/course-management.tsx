@@ -145,7 +145,7 @@ export function CourseManagement() {
         videos: [videoUrls]
       }
 
-      const response = await fetch("http://localhost:5000/api/courses", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/courses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -201,7 +201,7 @@ export function CourseManagement() {
         videos: [editVideoUrls]
       }
 
-      const response = await fetch(`http://localhost:5000/api/courses/${selectedCourse._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/courses/${selectedCourse._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -243,7 +243,7 @@ export function CourseManagement() {
         throw new Error('Authentication required. Please log in again.')
       }
 
-      const response = await fetch(`http://localhost:5000/api/courses/${courseId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/courses/${courseId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -323,7 +323,7 @@ export function CourseManagement() {
           throw new Error('Authentication required. Please log in again.')
         }
 
-        const response = await fetch("http://localhost:5000/api/courses", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/courses`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

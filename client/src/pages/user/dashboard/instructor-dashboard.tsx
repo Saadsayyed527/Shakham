@@ -172,7 +172,9 @@ export default function InstructorDashboard() {
                   <VideoManagement />
                 </TabsContent>
                 <TabsContent value="profile">
-                  <ProfileSettings />
+                  <ProfileSettings instructorData={undefined} setInstructorData={function (value: any): void {
+                    throw new Error("Function not implemented.")
+                  } } />
                 </TabsContent>
               </div>
             </Tabs>
