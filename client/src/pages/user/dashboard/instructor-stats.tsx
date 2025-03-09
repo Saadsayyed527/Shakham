@@ -15,43 +15,43 @@ export function InstructorStats() {
   })
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setLoading(true)
-        const token = localStorage.getItem("token")
-        const response = await fetch("/api/instructor/stats", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+  // useEffect(() => {
+  //   const fetchStats = async () => {
+  //     try {
+  //       setLoading(true)
+  //       const token = localStorage.getItem("token")
+  //       const response = await fetch("/api/instructor/stats", {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       })
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch stats")
-        }
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch stats")
+  //       }
 
-        const data = await response.json()
-        setStats(data)
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load statistics. Please try again.",
-          variant: "destructive",
-        })
-        // Set some default data for preview
-        setStats({
-          totalStudents: 128,
-          totalCourses: 12,
-          totalVideos: 86,
-          totalRevenue: 4280,
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
+  //       const data = await response.json()
+  //       setStats(data)
+  //     } catch (error) {
+  //       toast({
+  //         title: "Error",
+  //         description: "Failed to load statistics. Please try again.",
+  //         variant: "destructive",
+  //       })
+  //       // Set some default data for preview
+  //       setStats({
+  //         totalStudents: 128,
+  //         totalCourses: 12,
+  //         totalVideos: 86,
+  //         totalRevenue: 4280,
+  //       })
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
 
-    fetchStats()
-  }, [toast])
+  //   fetchStats()
+  // }, [toast])
 
   if (loading) {
     return (

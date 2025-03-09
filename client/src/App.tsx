@@ -16,7 +16,9 @@ import VideoPlayer from './pages/course/videoPlayer';
 import Cart from './pages/cart/Cart';
 import Checkout from './pages/cart/Checkout';
 import RoomPage from './pages/chat/RoomPage';
-import ChatPage from './pages/chat/ChatPage';
+
+import ChatList from './pages/user/chat/chat-list';
+import ChatRoom from './pages/user/chat/chat-room';
 
 
 
@@ -35,8 +37,7 @@ const App = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         
-        <Route path="/rooms" element={<RoomPage />} />
-        <Route path="/chat/:room" element={<ChatPage />} />
+  
 
         <Route path="/" element={<Home />} />
       </Routes>
