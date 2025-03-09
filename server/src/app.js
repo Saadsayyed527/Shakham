@@ -8,6 +8,7 @@ import "./config/db.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import generateCertificateRoute from "./routes/generate-certificate.js";
+import fs from "fs";
 
 import http from "http";
 import { Server } from "socket.io";
@@ -27,9 +28,26 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
+const courses = JSON.parse(fs.readFileSync("C:/Users/Saad/OneDrive/Desktop/Echelon/Shakham/server/src/csvjson.json", "utf8"));
 
 // Middleware
-app.use(cors());
+
+
+
+// app.use(cors());
+
+// app.use(cors());
+
+// ✅ Add this CORS middleware at the **top** before routes
+app.use(
+  cors({
+    origin: "http://localhost:5173", // ✅ Allow frontend
+    methods: ["GET", "POST", "PUT", "DELETE"], // ✅ Allow necessary methods
+    allowedHeaders: ["Content-Type", "Authorization"], // ✅ Allow headers
+  })
+);
+
+
 app.use(express.json());
 app.use(httpLogger);
 app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")));
@@ -41,7 +59,16 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api", generateCertificateRoute);
+app.get("/recommend/:clusterId/:startIndex?", (req, res) => {
+    const { clusterId, startIndex = 0 } = req.params;
+    const filteredCourses = courses.filter(course => course.Cluster === parseInt(clusterId));
+    
+    const start = parseInt(startIndex);
+    const end = start + 5;
+    const paginatedCourses = filteredCourses.slice(start, end);
 
+    res.json({ recommended: paginatedCourses, total: filteredCourses.length });
+});
 // Handle Favicon Request
 app.use((req, res, next) => {
     if (req.path === "/favicon.ico") return res.status(204).end();
