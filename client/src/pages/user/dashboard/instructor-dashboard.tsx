@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { useSelector } from "react-redux"
+import { RootState } from "@/store"
 import {
   Bell,
   ChevronDown,
@@ -11,7 +13,6 @@ import {
   Settings,
   User,
 } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -42,44 +43,22 @@ import { InstructorStats } from "./instructor-stats"
 export default function InstructorDashboard() {
   const navigate = useNavigate()
   const { toast } = useToast()
-  const [loading, setLoading] = useState(true)
-  const [instructorData, setInstructorData] = useState<any>(null)
+  
+  // Get user from Redux store
+  const user = useSelector((state: RootState) => state.auth.user)
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (!token) {
+    if (!user) {
       navigate("/login")
-      return
+    } else if (user.role !== "teacher") {
+      toast({
+        title: "Access Denied",
+        description: "You are not authorized to view this page.",
+        variant: "destructive",
+      })
+      navigate("/")
     }
-
-    // const fetchInstructorData = async () => {
-    //   try {
-    //     setLoading(true)
-    //     const response = await fetch("/api/instructor/profile", {
-    //       headers: {
-    //         Authorization: `Bearer ${token}`,
-    //       },
-    //     })
-
-    //     if (!response.ok) {
-    //       throw new Error("Failed to fetch instructor data")
-    //     }
-
-    //     const data = await response.json()
-    //     setInstructorData(data)
-    //   } catch (error) {
-    //     toast({
-    //       title: "Error",
-    //       description: "Failed to load instructor data. Please try again.",
-    //       variant: "destructive",
-    //     })
-    //   } finally {
-    //     setLoading(false)
-    //   }
-    // }
-
-    // fetchInstructorData()
-  }, [navigate, toast])
+  }, [user, navigate, toast])
 
   const handleLogout = () => {
     localStorage.removeItem("token")
@@ -90,12 +69,8 @@ export default function InstructorDashboard() {
     })
   }
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      </div>
-    )
+  if (!user || user.role !== "teacher") {
+    return null // Prevent rendering if user is not loaded or not a teacher
   }
 
   return (
@@ -132,11 +107,7 @@ export default function InstructorDashboard() {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="p-4">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleLogout}
-            >
+            <Button variant="outline" className="w-full" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </Button>
@@ -158,15 +129,12 @@ export default function InstructorDashboard() {
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center gap-2"
-                  >
+                  <Button variant="ghost" className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      {instructorData?.name?.charAt(0) || "U"}
+                      {user.name?.charAt(0) || "U"}
                     </div>
                     <span className="hidden md:inline-flex">
-                      {instructorData?.name || "Instructor"}
+                      {user.name || "Instructor"}
                     </span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -177,9 +145,7 @@ export default function InstructorDashboard() {
                   <DropdownMenuItem>Profile</DropdownMenuItem>
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    Logout
-                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -206,10 +172,7 @@ export default function InstructorDashboard() {
                   <VideoManagement />
                 </TabsContent>
                 <TabsContent value="profile">
-                  <ProfileSettings
-                    instructorData={instructorData}
-                    setInstructorData={setInstructorData}
-                  />
+                  <ProfileSettings />
                 </TabsContent>
               </div>
             </Tabs>

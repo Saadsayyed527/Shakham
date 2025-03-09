@@ -1,175 +1,117 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
-import { Edit, MoreHorizontal, Plus, Trash, Upload, Video } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Edit, MoreHorizontal, Plus, Trash, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
+import { useSearchParams } from "react-router-dom"
 
 interface VideoItem {
   id: string
   title: string
   description: string
-  courseId: string
-  courseName: string
-  duration: string
-  createdAt: string
-  url: string
+  price: number
+  category: string
+  rating: number
+  videos: string[]
 }
 
 export function VideoManagement() {
-  const { toast } = useToast()
+  const [searchParams] = useSearchParams()
+  const courseId = searchParams.get('courseId')
   const [videos, setVideos] = useState<VideoItem[]>([])
-  const [courses, setCourses] = useState<{ id: string; title: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [newVideo, setNewVideo] = useState({
     title: "",
     description: "",
-    courseId: "",
-    file: null as File | null,
+    price: 0,
+    category: "",
+    rating: 0,
+    videoUrl: "",
   })
-  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const showError = (message: string) => {
+    setError(message)
+    setTimeout(() => setError(null), 3000)
+  }
+
+  const showSuccess = (message: string) => {
+    setSuccess(message)
+    setTimeout(() => setSuccess(null), 3000)
+  }
 
   useEffect(() => {
-    const fetchVideosAndCourses = async () => {
+    const fetchVideos = async () => {
+      if (!courseId) {
+        showError("No course ID provided")
+        return
+      }
+
       try {
         setLoading(true)
         const token = localStorage.getItem("token")
-
-        // Fetch videos
-        const videosResponse = await fetch("/api/instructor/videos", {
+        const response = await fetch(`http://localhost:5000/api/courses/${courseId}/videos`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
 
-        if (!videosResponse.ok) {
+        if (!response.ok) {
           throw new Error("Failed to fetch videos")
         }
 
-        const videosData = await videosResponse.json()
-        setVideos(videosData)
-
-        // Fetch courses for dropdown
-        const coursesResponse = await fetch("/api/instructor/courses", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (!coursesResponse.ok) {
-          throw new Error("Failed to fetch courses")
-        }
-
-        const coursesData = await coursesResponse.json()
-        setCourses(coursesData.map((course) => ({ id: course.id, title: course.title })))
+        const data = await response.json()
+        setVideos(data)
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load data. Please try again.",
-          variant: "destructive",
-        })
-        // Set some sample data for preview
-        setVideos([
-          {
-            id: "1",
-            title: "Introduction to React Hooks",
-            description: "Learn the basics of React Hooks and how to use them in your applications.",
-            courseId: "1",
-            courseName: "Introduction to React",
-            duration: "12:34",
-            createdAt: "2023-10-15",
-            url: "https://example.com/video1.mp4",
-          },
-          {
-            id: "2",
-            title: "State Management with Redux",
-            description: "A comprehensive guide to managing state with Redux in React applications.",
-            courseId: "1",
-            courseName: "Introduction to React",
-            duration: "24:18",
-            createdAt: "2023-10-18",
-            url: "https://example.com/video2.mp4",
-          },
-          {
-            id: "3",
-            title: "Advanced JavaScript Concepts",
-            description: "Deep dive into advanced JavaScript concepts like closures and prototypes.",
-            courseId: "2",
-            courseName: "Advanced JavaScript Patterns",
-            duration: "18:45",
-            createdAt: "2023-11-05",
-            url: "https://example.com/video3.mp4",
-          },
-        ])
-
-        setCourses([
-          { id: "1", title: "Introduction to React" },
-          { id: "2", title: "Advanced JavaScript Patterns" },
-          { id: "3", title: "MongoDB for Beginners" },
-        ])
+        showError("Failed to load videos. Please try again.")
       } finally {
         setLoading(false)
       }
     }
 
-    fetchVideosAndCourses()
-  }, [toast])
+    fetchVideos()
+  }, [courseId])
 
   const handleAddVideo = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!courseId) {
+      showError("No course ID provided")
+      return
+    }
 
-    if (!newVideo.title || !newVideo.courseId || !newVideo.file) {
-      toast({
-        title: "Error",
-        description: "Please fill all required fields and select a video file.",
-        variant: "destructive",
-      })
+    if (!newVideo.title || !newVideo.description || !newVideo.videoUrl || !newVideo.category) {
+      showError("Please fill all required fields.")
       return
     }
 
     try {
       const token = localStorage.getItem("token")
-      const formData = new FormData()
-      formData.append("title", newVideo.title)
-      formData.append("description", newVideo.description)
-      formData.append("courseId", newVideo.courseId)
-      formData.append("video", newVideo.file)
-
-      const response = await fetch("/api/instructor/videos", {
+      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/videos`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: formData,
+        body: JSON.stringify({
+          title: newVideo.title,
+          description: newVideo.description,
+          price: Number(newVideo.price),
+          category: newVideo.category,
+          rating: Number(newVideo.rating),
+          videoUrl: newVideo.videoUrl,
+        }),
       })
 
       if (!response.ok) {
@@ -177,210 +119,116 @@ export function VideoManagement() {
       }
 
       const newVideoData = await response.json()
-
-      setVideos([...videos, newVideoData])
+      setVideos(prev => [...prev, newVideoData])
       setIsAddDialogOpen(false)
       setNewVideo({
         title: "",
         description: "",
-        courseId: "",
-        file: null,
+        price: 0,
+        category: "",
+        rating: 0,
+        videoUrl: "",
       })
 
-      toast({
-        title: "Success",
-        description: "Video added successfully",
-      })
+      showSuccess("Video added successfully")
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add video. Please try again.",
-        variant: "destructive",
-      })
+      showError("Failed to add video. Please try again.")
     }
   }
 
-  const handleUpdateVideo = async (e: React.FormEvent) => {
+  const handleEditVideo = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!selectedVideo || !selectedVideo.title || !selectedVideo.courseId) {
-      toast({
-        title: "Error",
-        description: "Please fill all required fields.",
-        variant: "destructive",
-      })
+    if (!selectedVideo || !selectedVideo.id || !courseId) {
+      showError("No video selected for editing")
       return
     }
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`/api/instructor/videos/${selectedVideo.id}`, {
+      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/videos/${selectedVideo.id}`, {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: selectedVideo.title,
           description: selectedVideo.description,
-          courseId: selectedVideo.courseId,
+          price: Number(selectedVideo.price),
+          category: selectedVideo.category,
+          rating: Number(selectedVideo.rating),
+          videoUrl: selectedVideo.videos?.[0] || "",
         }),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to update video")
-      }
+      if (!response.ok) throw new Error("Failed to update video")
 
-      const updatedVideoData = await response.json()
-
-      setVideos(videos.map((video) => (video.id === selectedVideo.id ? updatedVideoData : video)))
-
+      const updatedVideo = await response.json()
+      setVideos(prev => prev.map(video => 
+        video.id === updatedVideo.id ? updatedVideo : video
+      ))
       setIsEditDialogOpen(false)
-      setSelectedVideo(null)
-
-      toast({
-        title: "Success",
-        description: "Video updated successfully",
-      })
+      showSuccess("Video updated successfully")
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update video. Please try again.",
-        variant: "destructive",
-      })
+      showError("Failed to update video. Please try again.")
     }
   }
 
   const handleDeleteVideo = async (videoId: string) => {
+    if (!videoId || !courseId) {
+      showError("Invalid video ID")
+      return
+    }
+
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`/api/instructor/videos/${videoId}`, {
+      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/videos/${videoId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to delete video")
-      }
+      if (!response.ok) throw new Error("Failed to delete video")
 
-      setVideos(videos.filter((video) => video.id !== videoId))
-
-      toast({
-        title: "Success",
-        description: "Video deleted successfully",
-      })
+      setVideos(prev => prev.filter(video => video.id !== videoId))
+      showSuccess("Video deleted successfully")
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete video. Please try again.",
-        variant: "destructive",
-      })
+      showError("Failed to delete video. Please try again.")
     }
   }
 
-  const filteredVideos = videos.filter(
-    (video) =>
-      video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.courseName.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredVideos = videos.filter(video =>
+    (video?.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+    (video?.description?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   )
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div>
-          <CardTitle>Video Management</CardTitle>
-          <CardDescription>Add, edit, and manage your course videos</CardDescription>
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 mx-4 mt-4">
+          {error}
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add Video
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <form onSubmit={handleAddVideo}>
-              <DialogHeader>
-                <DialogTitle>Add New Video</DialogTitle>
-                <DialogDescription>Upload a new video to your course. Videos must be in MP4 format.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={newVideo.title}
-                    onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
-                    placeholder="Enter video title"
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={newVideo.description}
-                    onChange={(e) => setNewVideo({ ...newVideo, description: e.target.value })}
-                    placeholder="Enter video description"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="course">Course</Label>
-                  <Select
-                    value={newVideo.courseId}
-                    onValueChange={(value) => setNewVideo({ ...newVideo, courseId: value })}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courses.map((course) => (
-                        <SelectItem key={course.id} value={course.id}>
-                          {course.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="video">Video File</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="video"
-                      type="file"
-                      ref={fileInputRef}
-                      className="hidden"
-                      accept="video/mp4,video/x-m4v,video/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setNewVideo({ ...newVideo, file: e.target.files[0] })
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full"
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      {newVideo.file ? newVideo.file.name : "Select video file"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Upload Video</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+      )}
+      {success && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 mx-4 mt-4">
+          {success}
+        </div>
+      )}
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Course Management</CardTitle>
+            <CardDescription>Manage your course videos here.</CardDescription>
+          </div>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add Video
+              </Button>
+            </DialogTrigger>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="mb-4">
@@ -392,80 +240,188 @@ export function VideoManagement() {
           />
         </div>
         {loading ? (
-          <div className="flex h-40 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          </div>
+          <div className="text-center py-4">Loading...</div>
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead className="hidden md:table-cell">Category</TableHead>
+                <TableHead className="hidden md:table-cell">Price</TableHead>
+                <TableHead className="hidden md:table-cell">Rating</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredVideos.length === 0 ? (
                 <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead className="hidden md:table-cell">Course</TableHead>
-                  <TableHead className="hidden md:table-cell">Duration</TableHead>
-                  <TableHead className="hidden md:table-cell">Date Added</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No videos found.
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredVideos.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      No videos found.
+              ) : (
+                filteredVideos.map((video) => (
+                  <TableRow key={video.id}>
+                    <TableCell className="font-medium">{video.title}</TableCell>
+                    <TableCell className="hidden md:table-cell">{video.category}</TableCell>
+                    <TableCell className="hidden md:table-cell">${video.price}</TableCell>
+                    <TableCell className="hidden md:table-cell">{video.rating}/5</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedVideo(video)
+                              setIsEditDialogOpen(true)
+                            }}
+                          >
+                            <Edit className="mr-2 h-4 w-4" /> Edit Video
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            const videoPath = video.videos?.[0];
+                            if (videoPath) {
+                              const videoUrl = `http://localhost:5000/${videoPath}`;
+                              window.open(videoUrl, '_blank');
+                            }
+                          }}>
+                            <Video className="mr-2 h-4 w-4" /> Preview Video
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDeleteVideo(video.id)}
+                          >
+                            <Trash className="mr-2 h-4 w-4" /> Delete Video
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  filteredVideos.map((video) => (
-                    <TableRow key={video.id}>
-                      <TableCell className="font-medium">{video.title}</TableCell>
-                      <TableCell className="hidden md:table-cell">{video.courseName}</TableCell>
-                      <TableCell className="hidden md:table-cell">{video.duration}</TableCell>
-                      <TableCell className="hidden md:table-cell">{video.createdAt}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedVideo(video)
-                                setIsEditDialogOpen(true)
-                              }}
-                            >
-                              <Edit className="mr-2 h-4 w-4" /> Edit Video
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Video className="mr-2 h-4 w-4" /> Preview
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => handleDeleteVideo(video.id)}
-                            >
-                              <Trash className="mr-2 h-4 w-4" /> Delete Video
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
         )}
       </CardContent>
+
+      {/* Add Video Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <form onSubmit={handleAddVideo}>
+            <DialogHeader>
+              <DialogTitle>Add New Video</DialogTitle>
+              <DialogDescription>Add a new video with details.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  placeholder="Enter video title"
+                  value={newVideo.title}
+                  onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Enter video description"
+                  value={newVideo.description}
+                  onChange={(e) => setNewVideo({ ...newVideo, description: e.target.value })}
+                  className="h-20"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  placeholder="Enter video price"
+                  value={newVideo.price}
+                  onChange={(e) => setNewVideo({ ...newVideo, price: parseFloat(e.target.value) })}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="category">Category</Label>
+                <Input
+                  id="category"
+                  placeholder="Enter video category"
+                  value={newVideo.category}
+                  onChange={(e) => setNewVideo({ ...newVideo, category: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="rating">Rating</Label>
+                <Input
+                  id="rating"
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  placeholder="Enter video rating"
+                  value={newVideo.rating}
+                  onChange={(e) => setNewVideo({ ...newVideo, rating: parseFloat(e.target.value) })}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="videoUrl">Video URL</Label>
+                <Input
+                  id="videoUrl"
+                  type="url"
+                  placeholder="Enter video path (e.g., uploads/videos/video.mp4)"
+                  value={newVideo.videoUrl}
+                  onChange={(e) => setNewVideo({ ...newVideo, videoUrl: e.target.value })}
+                  required
+                />
+                <p className="text-xs text-gray-500">
+                  Add a local video path for your video
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsAddDialogOpen(false)
+                  setNewVideo({
+                    title: "",
+                    description: "",
+                    price: 0,
+                    category: "",
+                    rating: 0,
+                    videoUrl: "",
+                  })
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">
+                Add Video
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Video Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           {selectedVideo && (
-            <form onSubmit={handleUpdateVideo}>
+            <form onSubmit={handleEditVideo}>
               <DialogHeader>
                 <DialogTitle>Edit Video</DialogTitle>
                 <DialogDescription>Update the details of your video.</DialogDescription>
@@ -492,23 +448,73 @@ export function VideoManagement() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-course">Course</Label>
-                  <Select
-                    value={selectedVideo.courseId}
-                    onValueChange={(value) => setSelectedVideo({ ...selectedVideo, courseId: value })}
+                  <Label htmlFor="edit-price">Price</Label>
+                  <Input
+                    id="edit-price"
+                    type="number"
+                    value={selectedVideo.price}
+                    onChange={(e) => setSelectedVideo({ ...selectedVideo, price: parseFloat(e.target.value) })}
+                    placeholder="Enter video price"
                     required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-category">Category</Label>
+                  <Input
+                    id="edit-category"
+                    value={selectedVideo.category}
+                    onChange={(e) => setSelectedVideo({ ...selectedVideo, category: e.target.value })}
+                    placeholder="Enter video category"
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-rating">Rating</Label>
+                  <Input
+                    id="edit-rating"
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={selectedVideo.rating}
+                    onChange={(e) => setSelectedVideo({ ...selectedVideo, rating: parseFloat(e.target.value) })}
+                    placeholder="Enter video rating"
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-video">Video URL</Label>
+                  <Input
+                    id="edit-video"
+                    type="url"
+                    value={selectedVideo.videos?.[0] || ""}
+                    onChange={(e) => setSelectedVideo({ ...selectedVideo, videos: [e.target.value] })}
+                    placeholder="Enter video path (e.g., uploads/videos/video.mp4)"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const videoPath = selectedVideo.videos?.[0];
+                      if (videoPath) {
+                        const videoUrl = `http://localhost:5000/${videoPath}`;
+                        window.open(videoUrl, '_blank');
+                      }
+                    }}
+                    className="mt-2"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courses.map((course) => (
-                        <SelectItem key={course.id} value={course.id}>
-                          {course.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Video className="mr-2 h-4 w-4" /> Preview Video
+                  </Button>
+                  {selectedVideo.videos?.[0] && (
+                    <video 
+                      controls 
+                      className="w-full mt-2 rounded-lg" 
+                      src={`http://localhost:5000/${selectedVideo.videos[0]}`}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  )}
                 </div>
               </div>
               <DialogFooter>
@@ -524,4 +530,3 @@ export function VideoManagement() {
     </Card>
   )
 }
-
